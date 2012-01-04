@@ -1,0 +1,39 @@
+This is Perl module App::llenv.
+
+INSTALLATION
+
+Type the following command:
+
+    $ curl -L http://cpanmin.us | perl - App::llenv
+
+Or install cpanm and then run the following command to install
+App::llenv:
+
+    $ cpanm App::llenv
+
+If you get an archive of this distribution, unpack it and build it
+as per the usual:
+
+    $ tar xzf App-llenv-$version.tar.gz
+    $ cd App-llenv-$version
+    $ perl Makefile.PL
+    $ make && make test
+
+Then install it:
+
+    $ make install
+
+DOCUMENTATION
+
+App::llenv documentation is available as in POD. So you can do:
+
+    $ perldoc App::llenv
+
+to read the documentation online with your favorite pager.
+
+LICENSE AND COPYRIGHT
+
+Copyright (c) 2012, riywo. All rights reserved.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
