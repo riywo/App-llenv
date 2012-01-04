@@ -24,3 +24,4 @@ cover_db*
 *.gcno
 *.gcov
 *.stackdump
+local
