@@ -5,9 +5,7 @@ use warnings;
 use Getopt::Compact::WithCmd;
 use File::Spec::Functions qw( catfile catdir );
 use File::Path qw( mkpath );
-use Carp ();
 use Cwd;
-use Data::Dumper;
 
 our $VERSION = '0.01';
 
@@ -64,7 +62,6 @@ sub run {
 
 sub command_list {
     my ($self, @args) = @_;
-print Dumper \@_;
 }
 
 sub command_install {
@@ -77,7 +74,7 @@ sub command_install {
     my $bin_dir = $self->{'conf'}->{'common'}->{'bin_dir'};
     if (! -d $self->abs_path($bin_dir)) {
         mkpath $self->abs_path($bin_dir)
-            or Carp::croak("failed to create $bin_dir: $!");
+            or die "failed to create $bin_dir: $!";
     }
 
     my $abs_script = $self->abs_path($bin_dir, $script);
@@ -136,12 +133,12 @@ sub get_script_env {
 
 sub get_script_path {
     my ($self, $conf, $script) = @_;
-    for (qw/ll_path bundle_path app_path/) {
+    for (qw/app_path bundle_path ll_path/) {
         next unless(defined $conf->{$_});
         my $full_path = $self->abs_path($conf->{$_}, $script);
         return catfile('$LLENV_ROOT', $conf->{$_}, $script) if(-f $full_path);
     }
-    Carp::croak("not found $script");
+    die "not found $script";
 }
 
 sub get_local_path {
@@ -185,7 +182,7 @@ sub command_setup {
     my $app_name = $args[0];
     my $opts = $self->{'opts'};
     my $conf = $self->{'conf'}->{$opts->{'ll'}}
-        or Carp::croak("not found $opts->{'ll'} conf");
+        or die("not found $opts->{'ll'} conf");
 
     my $version = $opts->{'version'} || $conf->{'default_version'};
     my $ll_path = catdir($conf->{'install_dir'}, $version, 'bin');
@@ -197,7 +194,7 @@ sub command_setup {
 
     if (! -d $self->abs_path($app_dir)) {
         mkpath $self->abs_path($app_dir)
-            or Carp::croak("failed to create $app_dir: $!");
+            or die("failed to create $app_dir: $!");
     }
 
     open my $fh, '>', $self->abs_path($app_dir, 'llenv.pl');
@@ -223,10 +220,10 @@ sub abs_path {
 sub _get_config_pl {
     my ($fname) = @_;
     my $config = do $fname;
-    Carp::croak("$fname: $@") if $@;
-    Carp::croak("$fname: $!") unless defined $config;
+    die("$fname: $@") if $@;
+    die("$fname: $!") unless defined $config;
     unless ( ref($config) eq 'HASH' ) {
-        Carp::croak("$fname does not return HashRef.");
+        die("$fname does not return HashRef.");
     }
     return $config;
 }

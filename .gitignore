@@ -26,3 +26,4 @@ cover_db*
 *.stackdump
 local
 sandbox
+fatlib
