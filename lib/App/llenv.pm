@@ -13,7 +13,7 @@ sub new {
     my $class = shift;
     my $self = {};
     bless $self, $class;
-    $ENV{LLENV_ROOT} = $ENV{LLENV_ROOT} || catdir($ENV{HOME}, 'llenv');
+#    $ENV{LLENV_ROOT} = $ENV{LLENV_ROOT} || catdir($ENV{HOME}, 'llenv');
     return $self;
 }
 
@@ -64,11 +64,15 @@ sub init {
 EOF
         close $fh;
     }
-
     $self->{'conf'} = _get_config_pl(catfile($ENV{LLENV_ROOT}, 'config.pl'));
 
-
-
+    my $app_dir = $self->abs_path($self->{'conf'}->{'common'}->{'app_dir'});
+    my $bin_dir = $self->abs_path($self->{'conf'}->{'common'}->{'bin_dir'});
+    for my $path ($app_dir, $bin_dir) {
+        if (! -d $path) {
+            mkpath $path or die("failed to create $path: $!");
+        }
+    }
 }
 
 sub parse_options {
@@ -78,11 +82,8 @@ sub parse_options {
         name          => 'llenv',
         version       => $VERSION,
         command_struct => {
-            list => {
-                options     => [
-                    [ [qw/l ll/], 'LL', '=s', undef, { default => 'all' } ],
-                ],
-                desc        => 'list LL versions',
+            init => {
+                desc        => 'init llenv',
             },
             setup => {
                 options     => [
@@ -113,8 +114,15 @@ sub run {
     $self->can('command_' . $self->{'command'})->($self, @ARGV);
 }
 
-sub command_list {
+sub command_init {
     my ($self, @args) = @_;
+    print <<EOF;
+llenv init
+
+export LLENV_ROOT=$ENV{LLENV_ROOT}
+export PATH=\$LLENV_ROOT/bin:\$PATH
+
+EOF
 }
 
 sub command_install {

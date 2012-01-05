@@ -1,0 +1,44 @@
+#!/bin/sh
+
+LLENVURL=https://raw.github.com/riywo/App-llenv/master/llenv
+[[ -z $LLENV_ROOT ]] && LLENV_ROOT=$HOME/llenv
+
+if [ -z "$TMPDIR" ]; then
+    if [ -d "/tmp" ]; then
+        TMPDIR="/tmp"
+    else
+        TMPDIR="."
+    fi
+fi
+
+cd $TMPDIR || exit 1
+
+LOCALINSTALLER="llenv-$$"
+
+echo
+if type curl >/dev/null 2>&1; then
+  LLENVDOWNLOAD="curl -k -f -sS -Lo $LOCALINSTALLER $LLENVURL"
+elif type wget >/dev/null 2>&1; then
+  LLENVDOWNLOAD="wget --no-check-certificate -nv -O $LOCALINSTALLER $LLENVURL"
+else
+  echo "Need wget or curl to use $0"
+  exit 1
+fi
+
+clean_exit () {
+  [ -f $LOCALINSTALLER ] && rm $LOCALINSTALLER
+  exit $1
+}
+
+echo "## Download the latest llenv"
+$LLENVDOWNLOAD || clean_exit 1
+
+echo
+echo "## Installing llenv"
+chmod +x $LOCALINSTALLER
+./$LOCALINSTALLER init || clean_exit 1
+
+echo
+echo "## Done."
+rm ./$LOCALINSTALLER
+
