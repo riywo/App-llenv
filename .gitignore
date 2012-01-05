@@ -25,3 +25,4 @@ cover_db*
 *.gcov
 *.stackdump
 local
+sandbox
