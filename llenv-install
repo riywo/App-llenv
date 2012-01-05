@@ -37,8 +37,8 @@ echo
 echo "## Installing llenv"
 chmod +x $LOCALINSTALLER
 ./$LOCALINSTALLER init || clean_exit 1
+mv $LOCALINSTALLER $LLENV_ROOT/bin/llenv
+chmod 755 $LLENV_ROOT/bin/llenv
 
 echo
 echo "## Done."
-rm ./$LOCALINSTALLER
-
