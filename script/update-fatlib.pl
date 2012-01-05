@@ -5,6 +5,7 @@ use File::Path;
 use Cwd;
 
 my $modules = [ split /\s+/, <<MODULES ];
+Getopt/Long.pm
 Text/Aligner.pm
 Text/Table.pm
 Getopt/Compact/WithCmd.pm

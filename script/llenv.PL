@@ -3,7 +3,7 @@
 # __FATPACK__
 use strict;
 use FindBin qw($RealBin);                    # For dev -- Auto-removed
-use lib "$RealBin/../lib", "$RealBin/../fatlib"; # For dev -- Auto-removed
+use lib "$RealBin/../lib", "$RealBin/../local/lib/perl5"; # For dev -- Auto-removed
 use App::llenv;
 
 unless (caller) {

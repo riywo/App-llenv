@@ -185,8 +185,8 @@ sub get_script_env {
     my $env = {
         'PATH' => $local_path,
     };
-    $env->{$env_app_lib} .= $app_lib;
     $env->{$env_bundle_lib} .= $bundle_lib;
+    $env->{$env_app_lib} .= $app_lib;
 
     return ($ll, $script_file, $env);
 }
