@@ -1,5 +1,68 @@
 {
    "modules" : {
+      "App::FatPacker" : {
+         "dist" : "App-FatPacker-0.009006",
+         "module" : "App::FatPacker",
+         "mymeta" : {
+            "abstract" : "pack your dependencies onto your script file",
+            "author" : [
+               "Matt S. Trout (mst) <mst@shadowcat.co.uk>"
+            ],
+            "dynamic_config" : 0,
+            "generated_by" : "Module::Install version 1.00, CPAN::Meta::Converter version 2.112150",
+            "license" : [
+               "perl_5"
+            ],
+            "meta-spec" : {
+               "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+               "version" : "2"
+            },
+            "name" : "App-FatPacker",
+            "no_index" : {
+               "directory" : [
+                  "inc",
+                  "t"
+               ]
+            },
+            "prereqs" : {
+               "build" : {
+                  "requires" : {
+                     "ExtUtils::MakeMaker" : "6.42"
+                  }
+               },
+               "configure" : {
+                  "requires" : {
+                     "ExtUtils::MakeMaker" : "6.42"
+                  }
+               },
+               "runtime" : {
+                  "requires" : {
+                     "perl" : "5.008001"
+                  }
+               }
+            },
+            "release_status" : "stable",
+            "resources" : {
+               "license" : [
+                  "http://dev.perl.org/licenses/"
+               ]
+            },
+            "version" : "0.009006",
+            "x_module_name" : "App::FatPacker"
+         },
+         "name" : "App::FatPacker",
+         "pathname" : "D/DG/DGL/App-FatPacker-0.009006.tar.gz",
+         "provides" : {
+            "App::FatPacker" : {
+               "file" : "App/FatPacker.pm",
+               "version" : "0.009006"
+            },
+            "App::FatPacker::Trace" : {
+               "file" : "App/FatPacker/Trace.pm"
+            }
+         },
+         "version" : "0.009006"
+      },
       "Data::OptList" : {
          "dist" : "Data-OptList-0.107",
          "module" : "Data::OptList",
@@ -9,7 +72,7 @@
                "Ricardo Signes <rjbs@cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "Dist::Zilla version 4.200006, CPAN::Meta::Converter version 2.110930, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "Dist::Zilla version 4.200006, CPAN::Meta::Converter version 2.110930, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -262,7 +325,7 @@
                "Michael G Schwern <schwern@pobox.com>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -446,7 +509,7 @@
                "xaicron <xaicron {at} cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "Module::Install version 1.02, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "Module::Install version 1.02, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -518,7 +581,7 @@
                "Adam Kennedy <adamk@cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.56, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.56, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -576,7 +639,7 @@
                "Ricardo SIGNES, C<< <rjbs@cpan.org> >>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "Module::Install version 0.77, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "Module::Install version 0.77, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -641,7 +704,7 @@
                "Ricardo Signes <rjbs@cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.48, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.48, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -699,7 +762,7 @@
                "brian d foy <bdfoy@cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.55_02, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.55_02, CPAN::Meta::Converter version 2.112150",
             "keywords" : [
                "testing",
                "STDOUT",
@@ -772,7 +835,7 @@
                "Tokuhiro Matsuno <tokuhirom @*(#RJKLFHFSDLJF gmail.com>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "Module::Install version 1.00, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "Module::Install version 1.00, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "perl_5"
             ],
@@ -824,101 +887,6 @@
          },
          "version" : "0.06"
       },
-      "Test::Simple" : {
-         "dist" : "Test-Simple-0.98",
-         "module" : "Test::More",
-         "mymeta" : {
-            "abstract" : "Basic utilities for writing tests.",
-            "author" : [
-               "Michael G Schwern <schwern@pobox.com>"
-            ],
-            "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.57_06, CPAN::Meta::Converter version 2.112621",
-            "license" : [
-               "perl_5"
-            ],
-            "meta-spec" : {
-               "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-               "version" : "2"
-            },
-            "name" : "Test-Simple",
-            "no_index" : {
-               "directory" : [
-                  "t",
-                  "inc"
-               ]
-            },
-            "prereqs" : {
-               "build" : {
-                  "requires" : {
-                     "ExtUtils::MakeMaker" : 0
-                  }
-               },
-               "configure" : {
-                  "requires" : {
-                     "ExtUtils::MakeMaker" : 0
-                  }
-               },
-               "runtime" : {
-                  "requires" : {
-                     "Test::Harness" : "2.03",
-                     "perl" : "5.006"
-                  }
-               }
-            },
-            "release_status" : "stable",
-            "resources" : {
-               "bugtracker" : {
-                  "web" : "http://github.com/schwern/test-more/issues"
-               },
-               "homepage" : "http://test-more.googlecode.com",
-               "license" : [
-                  "http://dev.perl.org/licenses/"
-               ],
-               "repository" : {
-                  "url" : "http://github.com/schwern/test-more/tree/master"
-               },
-               "x_MailingList" : "http://groups.google.com/group/test-more-users"
-            },
-            "version" : "0.98"
-         },
-         "name" : "Test::Simple",
-         "pathname" : "M/MS/MSCHWERN/Test-Simple-0.98.tar.gz",
-         "provides" : {
-            "Test::Builder" : {
-               "file" : "Test/Builder.pm",
-               "version" : "0.98"
-            },
-            "Test::Builder::IO::Scalar" : {
-               "file" : "Test/Builder/IO/Scalar.pm",
-               "version" : "2.110"
-            },
-            "Test::Builder::Module" : {
-               "file" : "Test/Builder/Module.pm",
-               "version" : "0.98"
-            },
-            "Test::Builder::Tester" : {
-               "file" : "Test/Builder/Tester.pm",
-               "version" : "1.22"
-            },
-            "Test::Builder::Tester::Color" : {
-               "file" : "Test/Builder/Tester/Color.pm",
-               "version" : "1.22"
-            },
-            "Test::Builder::Tester::Tie" : {
-               "file" : "Test/Builder/Tester.pm"
-            },
-            "Test::More" : {
-               "file" : "Test/More.pm",
-               "version" : "0.98"
-            },
-            "Test::Simple" : {
-               "file" : "Test/Simple.pm",
-               "version" : "0.98"
-            }
-         },
-         "version" : "0.98"
-      },
       "Test::Tester" : {
          "dist" : "Test-Tester-0.108",
          "module" : "Test::Tester",
@@ -928,7 +896,7 @@
                "unknown"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.30_01, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.30_01, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "unknown"
             ],
@@ -982,7 +950,7 @@
                "Anno Siegel (siegel@zrz.tu-berlin.de)"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "ExtUtils::MakeMaker version 6.56, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "ExtUtils::MakeMaker version 6.56, CPAN::Meta::Converter version 2.112150",
             "license" : [
                "unknown"
             ],
@@ -1043,7 +1011,7 @@
                "Shlomi Fish <shlomif@cpan.org>"
             ],
             "dynamic_config" : 0,
-            "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112621",
+            "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
             "keywords" : [
                "art",
                "ascii",
