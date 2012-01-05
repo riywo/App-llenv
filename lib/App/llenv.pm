@@ -20,6 +20,10 @@ sub new {
 sub init {
     my $self = shift;
 
+    if (! -d $ENV{LLENV_ROOT}) {
+        mkpath $ENV{LLENV_ROOT} or die("failed to create $ENV{LLENV_ROOT}: $!");
+    }
+
     if (! -f $self->abs_path('config.pl')) {
         open my $fh, '>', $self->abs_path('config.pl');
         print {$fh} <<"EOF";
