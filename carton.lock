@@ -572,6 +572,57 @@
          },
          "version" : "0.19"
       },
+      "Getopt::Long" : {
+         "dist" : "Getopt-Long-2.38",
+         "module" : "Getopt::Long",
+         "mymeta" : {
+            "abstract" : "unknown",
+            "author" : [
+               "unknown"
+            ],
+            "dynamic_config" : 0,
+            "generated_by" : "ExtUtils::MakeMaker version 6.30, CPAN::Meta::Converter version 2.112150",
+            "license" : [
+               "unknown"
+            ],
+            "meta-spec" : {
+               "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+               "version" : "2"
+            },
+            "name" : "Getopt-Long",
+            "prereqs" : {
+               "build" : {
+                  "requires" : {
+                     "ExtUtils::MakeMaker" : 0
+                  }
+               },
+               "runtime" : {
+                  "requires" : {
+                     "Pod::Usage" : "1.14"
+                  }
+               }
+            },
+            "release_status" : "stable",
+            "version" : "2.38",
+            "x_installdirs" : "perl",
+            "x_version_from" : null
+         },
+         "name" : "Getopt::Long",
+         "pathname" : "J/JV/JV/Getopt-Long-2.38.tar.gz",
+         "provides" : {
+            "Getopt::Long" : {
+               "file" : "Getopt/Long.pm",
+               "version" : "2.38"
+            },
+            "Getopt::Long::CallBack" : {
+               "file" : "Getopt/Long.pm"
+            },
+            "Getopt::Long::Parser" : {
+               "file" : "Getopt/Long.pm"
+            }
+         },
+         "version" : "2.38"
+      },
       "Params::Util" : {
          "dist" : "Params-Util-1.04",
          "module" : "Params::Util",
@@ -625,6 +676,58 @@
          "provides" : {
             "Params::Util" : {
                "file" : "Params/Util.pm",
+               "version" : "1.04"
+            }
+         },
+         "version" : "1.04"
+      },
+      "String::ShellQuote" : {
+         "dist" : "String-ShellQuote-1.04",
+         "module" : "String::ShellQuote",
+         "mymeta" : {
+            "abstract" : "unknown",
+            "author" : [
+               "unknown"
+            ],
+            "dynamic_config" : 0,
+            "generated_by" : "ExtUtils::MakeMaker version 6.55_02, CPAN::Meta::Converter version 2.112150",
+            "license" : [
+               "unknown"
+            ],
+            "meta-spec" : {
+               "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+               "version" : "2"
+            },
+            "name" : "String-ShellQuote",
+            "no_index" : {
+               "directory" : [
+                  "t",
+                  "inc"
+               ]
+            },
+            "prereqs" : {
+               "build" : {
+                  "requires" : {
+                     "ExtUtils::MakeMaker" : 0
+                  }
+               },
+               "configure" : {
+                  "requires" : {
+                     "ExtUtils::MakeMaker" : 0
+                  }
+               },
+               "runtime" : {
+                  "requires" : {}
+               }
+            },
+            "release_status" : "stable",
+            "version" : "1.04"
+         },
+         "name" : "String::ShellQuote",
+         "pathname" : "R/RO/ROSCH/String-ShellQuote-1.04.tar.gz",
+         "provides" : {
+            "String::ShellQuote" : {
+               "file" : "String/ShellQuote.pm",
                "version" : "1.04"
             }
          },

@@ -11,6 +11,7 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
   use strict;
   use warnings;
   use Getopt::Compact::WithCmd;
+  use String::ShellQuote;
   use File::Spec::Functions qw( catfile catdir );
   use File::Path qw( mkpath );
   use Cwd;
@@ -105,12 +106,12 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
                   args        => 'APP_NAME',
               },
               exec => {
-                  desc        => 'exec cwd script',
-                  args        => 'SCRIPT_NAME[ -- SCRIPTOPTIONS]',
+                  desc        => 'exec cwd script/LL',
+                  args        => 'SCRIPT_NAME/LL [-- OPTIONS]',
               },
               install => {
                   desc        => 'install cwd script to bin dir',
-                  args        => 'SCRIPT_NAME',
+                  args        => 'SCRIPT_NAME [INSTALL_NAME]',
               },
           },
       );
@@ -139,8 +140,9 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
   
   sub command_install {
       my ($self, @args) = @_;
-      $self->{'go'}->show_usage unless(scalar @args == 1);
-      my $script = shift @args;
+      $self->{'go'}->show_usage unless(scalar @args >= 1);
+      my ($script, $install) = @args;
+      $install = $script unless(defined $install);
       my ($ll_path, $script_file, $env) = $self->get_script_env($script);
       $self->set_env($env);
   
@@ -150,7 +152,7 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
               or die "failed to create $bin_dir: $!";
       }
   
-      my $abs_script = $self->abs_path($bin_dir, $script);
+      my $abs_script = $self->abs_path($bin_dir, $install);
       my $export_env = join "\n", map { "export $_=\"$env->{$_}\$$_\"" } keys %$env;
       open my $fh, '>', $abs_script;
       print {$fh} <<"EOF";
@@ -166,10 +168,11 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
       my ($self, @args) = @_;
       $self->{'go'}->show_usage if(scalar @args < 1);
       my $script = shift @args;
+      
   
       my ($ll_path, $script_file, $env) = $self->get_script_env($script);
       $self->set_env($env);
-      system("$ll_path $script_file @args");
+      system("$ll_path $script_file ". shell_quote(@args));
   }
   
   sub set_env {
@@ -192,7 +195,7 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
   
       my $ll_path = $conf->{'ll_path'};
       my $local_path = $self->get_local_path($conf);
-      my $script_file = $self->get_script_path($conf, $script);
+      my $script_file = $script eq $ll ? '' : $self->get_script_path($conf, $script);
       my ($env_bundle_lib, $bundle_lib) = $self->get_bundle_lib($ll, $conf->{'bundle_lib'});
       my ($env_app_lib, $app_lib) = $self->get_app_lib($ll, $conf->{'app_lib'});
       my $env = {
@@ -211,7 +214,10 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
           my $full_path = $self->abs_path($conf->{$_}, $script);
           return catfile('$LLENV_ROOT', $conf->{$_}, $script) if(-f $full_path);
       }
-      die "not found $script";
+      my $full_path = $self->abs_path('bin', $script);
+      return catfile('$LLENV_ROOT', 'bin', $script) if(-f $full_path);
+      
+      return $script;
   }
   
   sub get_local_path {
@@ -364,11 +370,13 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   use strict;
   use warnings;
   use Getopt::Compact::WithCmd;
+  use String::ShellQuote;
   use File::Spec::Functions qw( catfile catdir );
   use File::Path qw( mkpath );
   use Cwd;
   
   our $VERSION = '0.01';
+  #Getopt::Long::Configure("pass_through");
   
   sub new {
       my $class = shift;
@@ -446,6 +454,10 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
                   desc        => 'LL path',
                   args        => 'LL VERSION',
               },
+              exec => {
+                  desc        => 'LL use(only add to PATH)',
+                  args        => 'LL VERSION OPTIONS',
+              },
           },
       );
   
@@ -513,6 +525,22 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
       print $path."\n";
   }
   
+  sub command_exec {
+      my ($self, @args) = @_;
+      $self->{'go'}->show_usage unless(scalar @args >= 2);
+      my ($ll, $version, @options) = @args;
+      die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+      my $conf = $self->{'conf'}->{$ll};
+  
+      my $path = catfile($conf->{'ll_dir'}, $version, 'bin', $ll);
+      my $LLENV_ROOT = $ENV{LLENV_ROOT};
+      my $LLENV_OSTYPE = $ENV{LLENV_OSTYPE};
+      my $abs_path = eval "qq{$path}";
+      die "not found $abs_path" unless(-f $abs_path);
+  
+      print("$abs_path ". shell_quote @options);
+      exec("$abs_path ". shell_quote(@options));
+  }
   
   
   
@@ -4228,6 +4256,205 @@ $fatpacked{"Getopt/Long.pm"} = <<'GETOPT_LONG';
   =cut
   
 GETOPT_LONG
+
+$fatpacked{"String/ShellQuote.pm"} = <<'STRING_SHELLQUOTE';
+  # $Id: ShellQuote.pm,v 1.11 2010-06-11 20:08:57 roderick Exp $
+  #
+  # Copyright (c) 1997 Roderick Schertler.  All rights reserved.  This
+  # program is free software; you can redistribute it and/or modify it
+  # under the same terms as Perl itself.
+  
+  =head1 NAME
+  
+  String::ShellQuote - quote strings for passing through the shell
+  
+  =head1 SYNOPSIS
+  
+      $string = shell_quote @list;
+      $string = shell_quote_best_effort @list;
+      $string = shell_comment_quote $string;
+  
+  =head1 DESCRIPTION
+  
+  This module contains some functions which are useful for quoting strings
+  which are going to pass through the shell or a shell-like object.
+  
+  =over
+  
+  =cut
+  
+  package String::ShellQuote;
+  
+  use strict;
+  use vars qw($VERSION @ISA @EXPORT);
+  
+  require Exporter;
+  
+  $VERSION	= '1.04';
+  @ISA		= qw(Exporter);
+  @EXPORT		= qw(shell_quote shell_quote_best_effort shell_comment_quote);
+  
+  sub croak {
+      require Carp;
+      goto &Carp::croak;
+  }
+  
+  sub _shell_quote_backend {
+      my @in = @_;
+      my @err = ();
+  
+      if (0) {
+  	require RS::Handy;
+  	print RS::Handy::data_dump(\@in);
+      }
+  
+      return \@err, '' unless @in;
+  
+      my $ret = '';
+      my $saw_non_equal = 0;
+      foreach (@in) {
+  	if (!defined $_ or $_ eq '') {
+  	    $_ = "''";
+  	    next;
+  	}
+  
+  	if (s/\x00//g) {
+  	    push @err, "No way to quote string containing null (\\000) bytes";
+  	}
+  
+      	my $escape = 0;
+  
+  	# = needs quoting when it's the first element (or part of a
+  	# series of such elements), as in command position it's a
+  	# program-local environment setting
+  
+  	if (/=/) {
+  	    if (!$saw_non_equal) {
+  	    	$escape = 1;
+  	    }
+  	}
+  	else {
+  	    $saw_non_equal = 1;
+  	}
+  
+  	if (m|[^\w!%+,\-./:=@^]|) {
+  	    $escape = 1;
+  	}
+  
+  	if ($escape
+  		|| (!$saw_non_equal && /=/)) {
+  
+  	    # ' -> '\''
+      	    s/'/'\\''/g;
+  
+  	    # make multiple ' in a row look simpler
+  	    # '\'''\'''\'' -> '"'''"'
+      	    s|((?:'\\''){2,})|q{'"} . (q{'} x (length($1) / 4)) . q{"'}|ge;
+  
+  	    $_ = "'$_'";
+  	    s/^''//;
+  	    s/''$//;
+  	}
+      }
+      continue {
+  	$ret .= "$_ ";
+      }
+  
+      chop $ret;
+      return \@err, $ret;
+  }
+  
+  =item B<shell_quote> [I<string>]...
+  
+  B<shell_quote> quotes strings so they can be passed through the shell.
+  Each I<string> is quoted so that the shell will pass it along as a
+  single argument and without further interpretation.  If no I<string>s
+  are given an empty string is returned.
+  
+  If any I<string> can't be safely quoted B<shell_quote> will B<croak>.
+  
+  =cut
+  
+  sub shell_quote {
+      my ($rerr, $s) = _shell_quote_backend @_;
+  
+      if (@$rerr) {
+      	my %seen;
+      	@$rerr = grep { !$seen{$_}++ } @$rerr;
+  	my $s = join '', map { "shell_quote(): $_\n" } @$rerr;
+  	chomp $s;
+  	croak $s;
+      }
+      return $s;
+  }
+  
+  =item B<shell_quote_best_effort> [I<string>]...
+  
+  This is like B<shell_quote>, excpet if the string can't be safely quoted
+  it does the best it can and returns the result, instead of dying.
+  
+  =cut
+  
+  sub shell_quote_best_effort {
+      my ($rerr, $s) = _shell_quote_backend @_;
+  
+      return $s;
+  }
+  
+  =item B<shell_comment_quote> [I<string>]
+  
+  B<shell_comment_quote> quotes the I<string> so that it can safely be
+  included in a shell-style comment (the current algorithm is that a sharp
+  character is placed after any newlines in the string).
+  
+  This routine might be changed to accept multiple I<string> arguments
+  in the future.  I haven't done this yet because I'm not sure if the
+  I<string>s should be joined with blanks ($") or nothing ($,).  Cast
+  your vote today!  Be sure to justify your answer.
+  
+  =cut
+  
+  sub shell_comment_quote {
+      return '' unless @_;
+      unless (@_ == 1) {
+  	croak "Too many arguments to shell_comment_quote "
+  	    	    . "(got " . @_ . " expected 1)";
+      }
+      local $_ = shift;
+      s/\n/\n#/g;
+      return $_;
+  }
+  
+  1;
+  
+  __END__
+  
+  =back
+  
+  =head1 EXAMPLES
+  
+      $cmd = 'fuser 2>/dev/null ' . shell_quote @files;
+      @pids = split ' ', `$cmd`;
+  
+      print CFG "# Configured by: ",
+  		shell_comment_quote($ENV{LOGNAME}), "\n";
+  
+  =head1 BUGS
+  
+  Only Bourne shell quoting is supported.  I'd like to add other shells
+  (particularly cmd.exe), but I'm not familiar with them.  It would be a
+  big help if somebody supplied the details.
+  
+  =head1 AUTHOR
+  
+  Roderick Schertler <F<roderick@argon.org>>
+  
+  =head1 SEE ALSO
+  
+  perl(1).
+  
+  =cut
+STRING_SHELLQUOTE
 
 $fatpacked{"Text/Aligner.pm"} = <<'TEXT_ALIGNER';
   # Text::Aligner - Align text in columns
