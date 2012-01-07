@@ -352,7 +352,7 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
 APP_LLENV
 
 $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
-  package App::llenv;
+  package App::llinstall;
   use 5.008_001;
   use strict;
   use warnings;
@@ -365,6 +365,7 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   
   sub new {
       my $class = shift;
+      die "not defined LLENV_ROOT" unless(defined $ENV{LLENV_ROOT});
       my $self = {};
       bless $self, $class;
       return $self;
@@ -377,86 +378,67 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
           mkpath $ENV{LLENV_ROOT} or die("failed to create $ENV{LLENV_ROOT}: $!");
       }
   
-      if (! -f $self->abs_path('config.pl')) {
-          open my $fh, '>', $self->abs_path('config.pl');
+      unless (defined $ENV{LLENV_OSTYPE}) {
+          my $ostype = `ostype`;
+          chomp $ostype;
+          $ENV{LLENV_OSTYPE} = $ostype;
+      }
+  
+      if (! -f $self->abs_path('llinstall_config.pl')) {
+          open my $fh, '>', $self->abs_path('llinstall_config.pl');
           print {$fh} <<"EOF";
   +{
       common => {
-          app_dir => 'apps',
-          bin_dir => 'bin',
       },
       perl => {
-          env_bundle_lib   => 'PERL5OPT',
-          env_app_lib      => 'PERL5OPT',
-          tmpl_bundle_lib  => 'local/lib/perl5',
-          tmpl_bundle_path => 'local/bin',
-          tmpl_app_lib     => 'lib',
-          tmpl_app_path    => 'bin',
+          env     => 'export PERLBREW_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/perl; export PERLBREW_HOME=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/perl;',
+          init    => 'curl -kL http://install.perlbrew.pl | bash',
+          install => 'source \$PERLBREW_ROOT/etc/bashrc && perlbrew install --notest',
+          list    => 'source \$PERLBREW_ROOT/etc/bashrc && perlbrew list',
       },
       ruby => {
-          env_bundle_lib   => 'GEM_PATH',
-          env_app_lib      => 'RUBYLIB',
-          tmpl_bundle_lib  => 'vendor/bundle/ruby/1.9.1',
-          tmpl_bundle_path => 'vendor/bundle/ruby/1.9.1/bin',
-          tmpl_app_lib     => 'lib',
-          tmpl_app_path    => 'bin',
+          env     => 'export RBENV_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/ruby; export PATH=\$RBENV_ROOT/bin:\$PATH;',
+          init    => 'GIT_SSL_NO_VERIFY=true git clone https://github.com/sstephenson/rbenv.git \$RBENV_ROOT && GIT_SSL_NO_VERIFY=true git clone https://github.com/sstephenson/ruby-build.git \$RBENV_ROOT/ruby-build && (cd \$RBENV_ROOT/ruby-build && PREFIX=\$RBENV_ROOT ./install.sh)',
+          install => 'eval "\$(rbenv init -)" && rbenv install',
+          list    => 'eval "\$(rbenv init -)" && rbenv versions',
       },
       python => {
-          env_bundle_lib   => 'PYTHONPATH',
-          env_app_lib      => 'PYTHONPATH',
-          tmpl_bundle_lib  => 'lib/python2.7/site-packages',
-          tmpl_bundle_path => 'bin',
-          tmpl_app_lib     => 'lib',
-          tmpl_app_path    => 'bin',
+          env     => 'export PYTHONBREW_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/python; export PYTHONBREW_HOME=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/python;',
+          init    => 'curl -kL http://xrl.us/pythonbrewinstall | bash',
+          install => 'source \$PYTHONBREW_ROOT/etc/bashrc && pythonbrew install --verbose --no-test',
+          list    => 'source \$PYTHONBREW_ROOT/etc/bashrc && pythonbrew list',
       },
       node => {
-          env_bundle_lib   => 'NODE_PATH',
-          env_app_lib      => 'NODE_PATH',
-          tmpl_bundle_lib  => 'node_modules',
-          tmpl_bundle_path => 'node_modules/.bin',
-          tmpl_app_lib     => 'lib',
-          tmpl_app_path    => 'bin',
+          env     => 'export NVM_DIR=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/node;',
+          init    => 'GIT_SSL_NO_VERIFY=true git clone https://github.com/creationix/nvm.git \$NVM_DIR',
+          install => 'source \$NVM_DIR/nvm.sh; nvm install',
+          list    => 'source \$NVM_DIR/nvm.sh; nvm ls',
       },
   };
   EOF
           close $fh;
       }
-      $self->{'conf'} = _get_config_pl(catfile($ENV{LLENV_ROOT}, 'config.pl'));
-  
-      my $app_dir = $self->abs_path($self->{'conf'}->{'common'}->{'app_dir'});
-      my $bin_dir = $self->abs_path($self->{'conf'}->{'common'}->{'bin_dir'});
-      for my $path ($app_dir, $bin_dir) {
-          if (! -d $path) {
-              mkpath $path or die("failed to create $path: $!");
-          }
-      }
+      $self->{'conf'} = _get_config_pl(catfile($ENV{LLENV_ROOT}, 'llinstall_config.pl'));
   }
   
   sub parse_options {
       my $self = shift;
       
       my $go = Getopt::Compact::WithCmd->new(
-          name          => 'llenv',
+          name          => 'llinstall',
           version       => $VERSION,
           command_struct => {
               init => {
-                  desc        => 'init llenv',
-              },
-              setup => {
-                  options     => [
-                      [ [qw/l ll/], 'LL', '=s', undef, { required => 1 } ],
-                      [ [qw/v version/], 'LL version', '=s' ],
-                  ],
-                  desc        => 'setup llenv app dir',
-                  args        => 'APP_NAME',
-              },
-              exec => {
-                  desc        => 'exec cwd script',
-                  args        => 'SCRIPT_NAME[ -- SCRIPTOPTIONS]',
+                  desc        => 'init llinstall',
+                  args        => 'LL',
               },
               install => {
-                  desc        => 'install cwd script to bin dir',
-                  args        => 'SCRIPT_NAME',
+                  desc        => 'install LL',
+                  args        => 'LL VERSION',
+              },
+              list => {
+                  desc        => 'list LL',
+                  args        => 'LL',
               },
           },
       );
@@ -473,158 +455,35 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   
   sub command_init {
       my ($self, @args) = @_;
-      print <<EOF;
-  llenv init
+      $self->{'go'}->show_usage unless(scalar @args == 1);
+      my ($ll, $version) = @args;
+      die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+      my $conf = $self->{'conf'}->{$ll};
   
-  export LLENV_ROOT=$ENV{LLENV_ROOT}
-  export PATH=\$LLENV_ROOT/bin:\$PATH
-  
-  EOF
+      system("$conf->{'env'} $conf->{'init'}");
   }
   
   sub command_install {
       my ($self, @args) = @_;
-      $self->{'go'}->show_usage unless(scalar @args == 1);
-      my $script = shift @args;
-      my ($ll, $script_file, $env) = $self->get_script_env($script);
-      $self->set_env($env);
+      $self->{'go'}->show_usage unless(scalar @args == 2);
+      my ($ll, $version) = @args;
+      die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+      my $conf = $self->{'conf'}->{$ll};
   
-      my $bin_dir = $self->{'conf'}->{'common'}->{'bin_dir'};
-      if (! -d $self->abs_path($bin_dir)) {
-          mkpath $self->abs_path($bin_dir)
-              or die "failed to create $bin_dir: $!";
-      }
-  
-      my $abs_script = $self->abs_path($bin_dir, $script);
-      my $export_env = join "\n", map { "export $_=\"$env->{$_}\$$_\"" } keys %$env;
-      open my $fh, '>', $abs_script;
-      print {$fh} <<"EOF";
-  #!/bin/sh
-  $export_env
-  exec /usr/bin/env $ll $script_file "\$@"
-  EOF
-      close $fh;
-      system("chmod +x $abs_script");
+      system("$conf->{'env'} $conf->{'install'} $version");
   }
   
-  sub command_exec {
-      my ($self, @args) = @_;
-      $self->{'go'}->show_usage if(scalar @args < 1);
-      my $script = shift @args;
-  
-      my ($ll, $script_file, $env) = $self->get_script_env($script);
-      $self->set_env($env);
-      system("/usr/bin/env $ll $script_file @args");
-  }
-  
-  sub set_env {
-      my ($self, $env) = @_;
-      my $LLENV_ROOT = $ENV{LLENV_ROOT};
-      for (keys %$env) {
-          $ENV{$_} = '' unless defined $ENV{$_};
-          my $str = eval "qq{$env->{$_}}";
-          $ENV{$_} = $str.$ENV{$_};
-      }
-  }
-  
-  sub get_script_env {
-      my ($self, $script) = @_;
-  
-      my $llenv_file = catdir(getcwd, '.llenv.pl');
-      my $app_conf = _get_config_pl($llenv_file);
-      my $ll = (keys %{$app_conf})[0];
-      my $conf = $app_conf->{$ll};
-  
-      my $local_path = $self->get_local_path($conf);
-      my $script_file = $self->get_script_path($conf, $script);
-      my ($env_bundle_lib, $bundle_lib) = $self->get_bundle_lib($ll, $conf->{'bundle_lib'});
-      my ($env_app_lib, $app_lib) = $self->get_app_lib($ll, $conf->{'app_lib'});
-      my $env = {
-          'PATH' => $local_path,
-      };
-      $env->{$env_bundle_lib} .= $bundle_lib;
-      $env->{$env_app_lib} .= $app_lib;
-  
-      return ($ll, $script_file, $env);
-  }
-  
-  sub get_script_path {
-      my ($self, $conf, $script) = @_;
-      for (qw/app_path bundle_path/) {
-          next unless(defined $conf->{$_});
-          my $full_path = $self->abs_path($conf->{$_}, $script);
-          return catfile('$LLENV_ROOT', $conf->{$_}, $script) if(-f $full_path);
-      }
-      die "not found $script";
-  }
-  
-  sub get_local_path {
-      my ($self, $conf) = @_;
-      my $path = '';
-      for (qw/bundle_path app_path/) {
-          next unless(defined $conf->{$_});
-          my $_path = catdir('$LLENV_ROOT', $conf->{$_});
-          $path = "$_path:$path";
-      }
-      return $path;
-  }
-  
-  sub get_bundle_lib {
-      my ($self, $ll, $lib) = @_;
-      my $env_bundle_lib = $self->{'conf'}->{$ll}->{'env_bundle_lib'};
-      $lib = catdir('$LLENV_ROOT', $lib);
-      if ($ll eq 'perl') {
-          $lib = "-Mlib=$lib ";
-      } else {
-          $lib = "$lib:";
-      }
-      return ($env_bundle_lib, $lib);
-  }
-  
-  sub get_app_lib {
-      my ($self, $ll, $lib) = @_;
-      my $env_app_lib = $self->{'conf'}->{$ll}->{'env_app_lib'};
-      $lib = catdir('$LLENV_ROOT', $lib);
-      if ($ll eq 'perl') {
-          $lib = "-Mlib=$lib ";
-      } else {
-          $lib = "$lib:";
-      }
-      return ($env_app_lib, $lib);
-  }
-  
-  sub command_setup {
+  sub command_list {
       my ($self, @args) = @_;
       $self->{'go'}->show_usage unless(scalar @args == 1);
-      my $app_name = $args[0];
-      my $opts = $self->{'opts'};
-      my $conf = $self->{'conf'}->{$opts->{'ll'}}
-          or die("not found $opts->{'ll'} conf");
+      my ($ll, $version) = @args;
+      die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+      my $conf = $self->{'conf'}->{$ll};
   
-      my $app_dir = catdir($self->{'conf'}->{'common'}->{'app_dir'}, $app_name);
-      my $app_bundle_lib = catdir($app_dir, $conf->{'tmpl_bundle_lib'});
-      my $app_bundle_path = catdir($app_dir, $conf->{'tmpl_bundle_path'});
-      my $app_lib = catdir($app_dir, $conf->{'tmpl_app_lib'});
-      my $app_path = catdir($app_dir, $conf->{'tmpl_app_path'});
-  
-      if (! -d $self->abs_path($app_dir)) {
-          mkpath $self->abs_path($app_dir)
-              or die("failed to create $app_dir: $!");
-      }
-  
-      open my $fh, '>', $self->abs_path($app_dir, '.llenv.pl');
-      print {$fh} <<"EOF";
-  +{
-      $opts->{'ll'} => {
-          bundle_lib => '$app_bundle_lib',
-          bundle_path => '$app_bundle_path',
-          app_lib => '$app_lib',
-          app_path => '$app_path',
-      },
+      system("$conf->{'env'} $conf->{'list'}");
   }
-  EOF
-      close $fh;
-  }
+  
+  
   
   sub abs_path {
       my ($self, @path) = @_;
@@ -6249,10 +6108,10 @@ unshift @INC, sub {
 } # END OF FATPACK CODE
 
 use strict;
-use App::llenv;
+use App::llinstall;
 
 unless (caller) {
-    my $app = App::llenv->new;
+    my $app = App::llinstall->new;
     $app->init;
     $app->parse_options(@ARGV);
     $app->run or exit(1);

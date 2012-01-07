@@ -23,8 +23,8 @@ sub init {
         mkpath $ENV{LLENV_ROOT} or die("failed to create $ENV{LLENV_ROOT}: $!");
     }
 
-    if (! -f $self->abs_path('config.pl')) {
-        open my $fh, '>', $self->abs_path('config.pl');
+    if (! -f $self->abs_path('llenv_config.pl')) {
+        open my $fh, '>', $self->abs_path('llenv_config.pl');
         print {$fh} <<"EOF";
 +{
     common => {
@@ -67,7 +67,7 @@ sub init {
 EOF
         close $fh;
     }
-    $self->{'conf'} = _get_config_pl(catfile($ENV{LLENV_ROOT}, 'config.pl'));
+    $self->{'conf'} = _get_config_pl(catfile($ENV{LLENV_ROOT}, 'llenv_config.pl'));
 
     my $app_dir = $self->abs_path($self->{'conf'}->{'common'}->{'app_dir'});
     my $bin_dir = $self->abs_path($self->{'conf'}->{'common'}->{'bin_dir'});

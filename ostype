@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ $OSTYPE = "linux-gnu" ]; then
+    LSB_ID=`lsb_release -i | cut -f2 -d:`
+    LSB_VERSION=`lsb_release -r | cut -f2 -d:`
+    OS_VERSION=`echo $LSB_ID-$LSB_VERSION | sed -e "s/ //g"`
+    MACHINE_TYPE=`uname -m`
+    echo $OS_VERSION-$MACHINE_TYPE
+else
+    echo `uname -rsm | sed -e "s/ /-/g"`
+fi
