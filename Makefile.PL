@@ -26,7 +26,9 @@ use inc::Module::Install;
 
 all_from 'lib/App/llenv.pm';
 
+requires 'Getopt::Long' => '2.36';
 requires 'Getopt::Compact::WithCmd' => 0;
+requires 'String::ShellQuote' => 0;
 
 test_requires 'Test::More'     => '0.88';
 test_requires 'Test::Requires' => '0.06';

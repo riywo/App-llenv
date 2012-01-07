@@ -3,11 +3,13 @@ use 5.008_001;
 use strict;
 use warnings;
 use Getopt::Compact::WithCmd;
+use String::ShellQuote;
 use File::Spec::Functions qw( catfile catdir );
 use File::Path qw( mkpath );
 use Cwd;
 
 our $VERSION = '0.01';
+#Getopt::Long::Configure("pass_through");
 
 sub new {
     my $class = shift;
@@ -85,6 +87,10 @@ sub parse_options {
                 desc        => 'LL path',
                 args        => 'LL VERSION',
             },
+            exec => {
+                desc        => 'LL use(only add to PATH)',
+                args        => 'LL VERSION OPTIONS',
+            },
         },
     );
 
@@ -152,6 +158,22 @@ sub command_path {
     print $path."\n";
 }
 
+sub command_exec {
+    my ($self, @args) = @_;
+    $self->{'go'}->show_usage unless(scalar @args >= 2);
+    my ($ll, $version, @options) = @args;
+    die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+    my $conf = $self->{'conf'}->{$ll};
+
+    my $path = catfile($conf->{'ll_dir'}, $version, 'bin', $ll);
+    my $LLENV_ROOT = $ENV{LLENV_ROOT};
+    my $LLENV_OSTYPE = $ENV{LLENV_OSTYPE};
+    my $abs_path = eval "qq{$path}";
+    die "not found $abs_path" unless(-f $abs_path);
+
+    print("$abs_path ". shell_quote @options);
+    exec("$abs_path ". shell_quote(@options));
+}
 
 
 

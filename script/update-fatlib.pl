@@ -9,6 +9,7 @@ Getopt/Long.pm
 Text/Aligner.pm
 Text/Table.pm
 Getopt/Compact/WithCmd.pm
+String/ShellQuote.pm
 MODULES
 
 my $packer = App::FatPacker->new;

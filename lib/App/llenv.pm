@@ -3,6 +3,7 @@ use 5.008_001;
 use strict;
 use warnings;
 use Getopt::Compact::WithCmd;
+use String::ShellQuote;
 use File::Spec::Functions qw( catfile catdir );
 use File::Path qw( mkpath );
 use Cwd;
@@ -97,12 +98,12 @@ sub parse_options {
                 args        => 'APP_NAME',
             },
             exec => {
-                desc        => 'exec cwd script',
-                args        => 'SCRIPT_NAME[ -- SCRIPTOPTIONS]',
+                desc        => 'exec cwd script/LL',
+                args        => 'SCRIPT_NAME/LL [-- OPTIONS]',
             },
             install => {
                 desc        => 'install cwd script to bin dir',
-                args        => 'SCRIPT_NAME',
+                args        => 'SCRIPT_NAME [INSTALL_NAME]',
             },
         },
     );
@@ -131,8 +132,9 @@ EOF
 
 sub command_install {
     my ($self, @args) = @_;
-    $self->{'go'}->show_usage unless(scalar @args == 1);
-    my $script = shift @args;
+    $self->{'go'}->show_usage unless(scalar @args >= 1);
+    my ($script, $install) = @args;
+    $install = $script unless(defined $install);
     my ($ll_path, $script_file, $env) = $self->get_script_env($script);
     $self->set_env($env);
 
@@ -142,7 +144,7 @@ sub command_install {
             or die "failed to create $bin_dir: $!";
     }
 
-    my $abs_script = $self->abs_path($bin_dir, $script);
+    my $abs_script = $self->abs_path($bin_dir, $install);
     my $export_env = join "\n", map { "export $_=\"$env->{$_}\$$_\"" } keys %$env;
     open my $fh, '>', $abs_script;
     print {$fh} <<"EOF";
@@ -158,10 +160,11 @@ sub command_exec {
     my ($self, @args) = @_;
     $self->{'go'}->show_usage if(scalar @args < 1);
     my $script = shift @args;
+    
 
     my ($ll_path, $script_file, $env) = $self->get_script_env($script);
     $self->set_env($env);
-    system("$ll_path $script_file @args");
+    system("$ll_path $script_file ". shell_quote(@args));
 }
 
 sub set_env {
@@ -184,7 +187,7 @@ sub get_script_env {
 
     my $ll_path = $conf->{'ll_path'};
     my $local_path = $self->get_local_path($conf);
-    my $script_file = $self->get_script_path($conf, $script);
+    my $script_file = $script eq $ll ? '' : $self->get_script_path($conf, $script);
     my ($env_bundle_lib, $bundle_lib) = $self->get_bundle_lib($ll, $conf->{'bundle_lib'});
     my ($env_app_lib, $app_lib) = $self->get_app_lib($ll, $conf->{'app_lib'});
     my $env = {
@@ -203,7 +206,10 @@ sub get_script_path {
         my $full_path = $self->abs_path($conf->{$_}, $script);
         return catfile('$LLENV_ROOT', $conf->{$_}, $script) if(-f $full_path);
     }
-    die "not found $script";
+    my $full_path = $self->abs_path('bin', $script);
+    return catfile('$LLENV_ROOT', 'bin', $script) if(-f $full_path);
+    
+    return $script;
 }
 
 sub get_local_path {
