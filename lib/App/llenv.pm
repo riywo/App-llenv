@@ -123,6 +123,7 @@ sub command_init {
 llenv init
 
 export LLENV_ROOT=$ENV{LLENV_ROOT}
+export LLENV_OSTYPE=`\$LLENV_ROOT/bin/ostype`
 export PATH=\$LLENV_ROOT/bin:\$PATH
 
 EOF

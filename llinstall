@@ -131,6 +131,7 @@ $fatpacked{"App/llenv.pm"} = <<'APP_LLENV';
   llenv init
   
   export LLENV_ROOT=$ENV{LLENV_ROOT}
+  export LLENV_OSTYPE=`\$LLENV_ROOT/bin/ostype`
   export PATH=\$LLENV_ROOT/bin:\$PATH
   
   EOF
@@ -366,6 +367,7 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   sub new {
       my $class = shift;
       die "not defined LLENV_ROOT" unless(defined $ENV{LLENV_ROOT});
+      die "not defined LLENV_OSTYPE" unless(defined $ENV{LLENV_OSTYPE});
       my $self = {};
       bless $self, $class;
       return $self;
@@ -378,12 +380,6 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
           mkpath $ENV{LLENV_ROOT} or die("failed to create $ENV{LLENV_ROOT}: $!");
       }
   
-      unless (defined $ENV{LLENV_OSTYPE}) {
-          my $ostype = `ostype`;
-          chomp $ostype;
-          $ENV{LLENV_OSTYPE} = $ostype;
-      }
-  
       if (! -f $self->abs_path('llinstall_config.pl')) {
           open my $fh, '>', $self->abs_path('llinstall_config.pl');
           print {$fh} <<"EOF";
@@ -394,25 +390,25 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
           env     => 'export PERLBREW_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/perl; export PERLBREW_HOME=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/perl;',
           init    => 'curl -kL http://install.perlbrew.pl | bash',
           install => 'source \$PERLBREW_ROOT/etc/bashrc && perlbrew install --notest',
-          list    => 'source \$PERLBREW_ROOT/etc/bashrc && perlbrew list',
+          ll_dir  => '\$LLENV_ROOT/lls/\$LLENV_OSTYPE/perl/perls',
       },
       ruby => {
           env     => 'export RBENV_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/ruby; export PATH=\$RBENV_ROOT/bin:\$PATH;',
           init    => 'GIT_SSL_NO_VERIFY=true git clone https://github.com/sstephenson/rbenv.git \$RBENV_ROOT && GIT_SSL_NO_VERIFY=true git clone https://github.com/sstephenson/ruby-build.git \$RBENV_ROOT/ruby-build && (cd \$RBENV_ROOT/ruby-build && PREFIX=\$RBENV_ROOT ./install.sh)',
           install => 'eval "\$(rbenv init -)" && rbenv install',
-          list    => 'eval "\$(rbenv init -)" && rbenv versions',
+          ll_dir  => '\$LLENV_ROOT/lls/\$LLENV_OSTYPE/ruby/versions',
       },
       python => {
           env     => 'export PYTHONBREW_ROOT=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/python; export PYTHONBREW_HOME=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/python;',
           init    => 'curl -kL http://xrl.us/pythonbrewinstall | bash',
           install => 'source \$PYTHONBREW_ROOT/etc/bashrc && pythonbrew install --verbose --no-test',
-          list    => 'source \$PYTHONBREW_ROOT/etc/bashrc && pythonbrew list',
+          ll_dir  => '\$LLENV_ROOT/lls/\$LLENV_OSTYPE/python/pythons',
       },
       node => {
           env     => 'export NVM_DIR=\$LLENV_ROOT/lls/\$LLENV_OSTYPE/node;',
           init    => 'GIT_SSL_NO_VERIFY=true git clone https://github.com/creationix/nvm.git \$NVM_DIR',
           install => 'source \$NVM_DIR/nvm.sh; nvm install',
-          list    => 'source \$NVM_DIR/nvm.sh; nvm ls',
+          ll_dir  => '\$LLENV_ROOT/lls/\$LLENV_OSTYPE/node',
       },
   };
   EOF
@@ -440,6 +436,10 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
                   desc        => 'list LL',
                   args        => 'LL',
               },
+              path => {
+                  desc        => 'LL path',
+                  args        => 'LL VERSION',
+              },
           },
       );
   
@@ -456,7 +456,7 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   sub command_init {
       my ($self, @args) = @_;
       $self->{'go'}->show_usage unless(scalar @args == 1);
-      my ($ll, $version) = @args;
+      my ($ll) = @args;
       die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
       my $conf = $self->{'conf'}->{$ll};
   
@@ -476,12 +476,37 @@ $fatpacked{"App/llinstall.pm"} = <<'APP_LLINSTALL';
   sub command_list {
       my ($self, @args) = @_;
       $self->{'go'}->show_usage unless(scalar @args == 1);
+      my ($ll) = @args;
+      die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
+      my $conf = $self->{'conf'}->{$ll};
+  
+      my $LLENV_ROOT = $ENV{LLENV_ROOT};
+      my $LLENV_OSTYPE = $ENV{LLENV_OSTYPE};
+      my $ll_dir = eval "qq{$conf->{'ll_dir'}}";
+  
+      opendir my $dh, $ll_dir or die "cannot opendir $ll_dir";
+      for my $dir (sort readdir $dh) {
+          next if($dir eq '.' or $dir eq '..');
+          next unless(-d catfile($ll_dir, $dir));
+          print "$dir\n";
+      }
+  }
+  
+  sub command_path {
+      my ($self, @args) = @_;
+      $self->{'go'}->show_usage unless(scalar @args == 2);
       my ($ll, $version) = @args;
       die "not found $ll in llinstall_config.pl" unless(defined $self->{conf}->{$ll});
       my $conf = $self->{'conf'}->{$ll};
   
-      system("$conf->{'env'} $conf->{'list'}");
+      my $path = catfile($conf->{'ll_dir'}, $version, 'bin', $ll);
+      my $LLENV_ROOT = $ENV{LLENV_ROOT};
+      my $LLENV_OSTYPE = $ENV{LLENV_OSTYPE};
+      my $abs_path = eval "qq{$path}";
+      die "not found $abs_path" unless(-f $abs_path);
+      print $path."\n";
   }
+  
   
   
   
