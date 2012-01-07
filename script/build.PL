@@ -1,9 +1,11 @@
 #!/usr/bin/env perl
 
-open my $in,  "<", "script/llenv.PL" or die $!;
-open my $out, ">", "llenv.tmp" or die $!;
+my $name = $ARGV[0] or die;
 
-print STDERR "Generating llenv from script/llenv.PL\n";
+open my $in,  "<", "script/$name.PL" or die $!;
+open my $out, ">", "$name.tmp" or die $!;
+
+print STDERR "Generating llenv from script/$name.PL\n";
 
 while (<$in>) {
     next if /Auto-removed/;
@@ -14,11 +16,11 @@ while (<$in>) {
 
 close $out;
 
-unlink "llenv";
-rename "llenv.tmp", "llenv";
-chmod 0755, "llenv";
+unlink "$name";
+rename "$name.tmp", "$name";
+chmod 0755, "$name";
 
-END { unlink "llenv.tmp" }
+END { unlink "$name.tmp" }
 
 # HFS is case sensitive, we have fatlib/version that contains Version/Requirements.pm :(
 sub zomg_hfs {
