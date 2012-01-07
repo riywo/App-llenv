@@ -1,6 +1,7 @@
 #!/bin/sh
 
 LLINSTALLURL=https://raw.github.com/riywo/App-llenv/master/llinstall
+OSTYPEURL=https://raw.github.com/riywo/App-llenv/master/ostype
 [[ -z $LLENV_ROOT ]] && export LLENV_ROOT=$HOME/llenv
 
 if [ -z "$TMPDIR" ]; then
@@ -13,30 +14,33 @@ fi
 
 cd $TMPDIR || exit 1
 
-LLINSTALLLOCALINSTALLER="llinstall-$$"
+for TMPURL in $LLINSTALLURL $OSTYPEURL; do
+  TMPCOMMAND=${TMPURL##*/}
+  TMPINSTALLER="$TMPCOMMAND-$$"
 
-echo
-if type curl >/dev/null 2>&1; then
-  LLINSTALLDOWNLOAD="curl -k -f -sS -Lo $LLINSTALLLOCALINSTALLER $LLINSTALLURL"
-elif type wget >/dev/null 2>&1; then
-  LLINSTALLDOWNLOAD="wget --no-check-certificate -nv -O $LLINSTALLLOCALINSTALLER $LLINSTALLURL"
-else
-  echo "Need wget or curl to use $0"
-  exit 1
-fi
+  echo
+  if type curl >/dev/null 2>&1; then
+    TMPDOWNLOAD="curl -k -f -sS -Lo $TMPINSTALLER $TMPURL"
+  elif type wget >/dev/null 2>&1; then
+    TMPDOWNLOAD="wget --no-check-certificate -nv -O $TMPINSTALLER $TMPURL"
+  else
+    echo "Need wget or curl to use $0"
+    exit 1
+  fi
 
-clean_exit () {
-  [ -f $LLINSTALLLOCALINSTALLER ] && rm $LLINSTALLLOCALINSTALLER
-  exit $1
-}
+  clean_exit () {
+    [ -f $TMPINSTALLER ] && rm $TMPINSTALLER
+    exit $1
+  }
 
-echo "## Download the latest llinstall"
-$LLINSTALLDOWNLOAD || clean_exit 1
+  echo "## Download the latest llinstall"
+  $TMPDOWNLOAD || clean_exit 1
 
-echo
-echo "## Installing llinstall"
-chmod +x $LLINSTALLLOCALINSTALLER
-mv $LLINSTALLLOCALINSTALLER $LLENV_ROOT/bin/llinstall
+  echo
+  echo "## Installing llinstall"
+  chmod +x $TMPINSTALLER
+  mv $TMPINSTALLER $LLENV_ROOT/bin/$TMPCOMMAND
 
-echo
-echo "## Done."
+  echo
+  echo "## Done."
+done
