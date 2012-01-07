@@ -133,7 +133,7 @@ sub command_install {
     my ($self, @args) = @_;
     $self->{'go'}->show_usage unless(scalar @args == 1);
     my $script = shift @args;
-    my ($ll, $script_file, $env) = $self->get_script_env($script);
+    my ($ll_path, $script_file, $env) = $self->get_script_env($script);
     $self->set_env($env);
 
     my $bin_dir = $self->{'conf'}->{'common'}->{'bin_dir'};
@@ -148,7 +148,7 @@ sub command_install {
     print {$fh} <<"EOF";
 #!/bin/sh
 $export_env
-exec /usr/bin/env $ll $script_file "\$@"
+exec $ll_path $script_file "\$@"
 EOF
     close $fh;
     system("chmod +x $abs_script");
@@ -159,9 +159,9 @@ sub command_exec {
     $self->{'go'}->show_usage if(scalar @args < 1);
     my $script = shift @args;
 
-    my ($ll, $script_file, $env) = $self->get_script_env($script);
+    my ($ll_path, $script_file, $env) = $self->get_script_env($script);
     $self->set_env($env);
-    system("/usr/bin/env $ll $script_file @args");
+    system("$ll_path $script_file @args");
 }
 
 sub set_env {
@@ -182,6 +182,7 @@ sub get_script_env {
     my $ll = (keys %{$app_conf})[0];
     my $conf = $app_conf->{$ll};
 
+    my $ll_path = $conf->{'ll_path'};
     my $local_path = $self->get_local_path($conf);
     my $script_file = $self->get_script_path($conf, $script);
     my ($env_bundle_lib, $bundle_lib) = $self->get_bundle_lib($ll, $conf->{'bundle_lib'});
@@ -192,7 +193,7 @@ sub get_script_env {
     $env->{$env_bundle_lib} .= $bundle_lib;
     $env->{$env_app_lib} .= $app_lib;
 
-    return ($ll, $script_file, $env);
+    return ($ll_path, $script_file, $env);
 }
 
 sub get_script_path {
@@ -248,6 +249,10 @@ sub command_setup {
     my $conf = $self->{'conf'}->{$opts->{'ll'}}
         or die("not found $opts->{'ll'} conf");
 
+    my $ll_path = defined $opts->{'version'}
+        ? `llinstall path $opts->{'ll'} $opts->{'version'}` : "/usr/bin/env $opts->{'ll'}";
+    chomp $ll_path;
+
     my $app_dir = catdir($self->{'conf'}->{'common'}->{'app_dir'}, $app_name);
     my $app_bundle_lib = catdir($app_dir, $conf->{'tmpl_bundle_lib'});
     my $app_bundle_path = catdir($app_dir, $conf->{'tmpl_bundle_path'});
@@ -263,10 +268,11 @@ sub command_setup {
     print {$fh} <<"EOF";
 +{
     $opts->{'ll'} => {
-        bundle_lib => '$app_bundle_lib',
+        ll_path     => '$ll_path',
+        bundle_lib  => '$app_bundle_lib',
         bundle_path => '$app_bundle_path',
-        app_lib => '$app_lib',
-        app_path => '$app_path',
+        app_lib     => '$app_lib',
+        app_path    => '$app_path',
     },
 }
 EOF
