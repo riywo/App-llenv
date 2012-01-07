@@ -171,7 +171,6 @@ sub command_exec {
     my $abs_path = eval "qq{$path}";
     die "not found $abs_path" unless(-f $abs_path);
 
-    print("$abs_path ". shell_quote @options);
     exec("$abs_path ". shell_quote(@options));
 }
 
