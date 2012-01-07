@@ -13,7 +13,6 @@ sub new {
     my $class = shift;
     my $self = {};
     bless $self, $class;
-#    $ENV{LLENV_ROOT} = $ENV{LLENV_ROOT} || catdir($ENV{HOME}, 'llenv');
     return $self;
 }
 
