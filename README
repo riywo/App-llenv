@@ -2,26 +2,13 @@ This is Perl module App::llenv.
 
 INSTALLATION
 
-Type the following command:
+    $ curl -kL https://raw.github.com/riywo/App-llenv/master/llenv-install | bash
 
-    $ curl -L http://cpanmin.us | perl - App::llenv
+and add your .bashrc or something
 
-Or install cpanm and then run the following command to install
-App::llenv:
-
-    $ cpanm App::llenv
-
-If you get an archive of this distribution, unpack it and build it
-as per the usual:
-
-    $ tar xzf App-llenv-$version.tar.gz
-    $ cd App-llenv-$version
-    $ perl Makefile.PL
-    $ make && make test
-
-Then install it:
-
-    $ make install
+    export LLENV_ROOT=$HOME/llenv
+    export LLENV_OSTYPE=`$LLENV_ROOT/bin/ostype`
+    export PATH=$LLENV_ROOT/bin:$PATH
 
 DOCUMENTATION
 
