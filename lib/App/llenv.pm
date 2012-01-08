@@ -99,6 +99,9 @@ sub parse_options {
                 args        => 'APP_NAME',
             },
             exec => {
+                options     => [
+                    [ [qw/d direct/], 'direct exec(not exec LL)'],
+                ],
                 desc        => 'exec cwd script/LL',
                 args        => 'SCRIPT_NAME/LL [-- OPTIONS]',
             },
@@ -163,12 +166,15 @@ sub command_exec {
     my $script = shift @args;
     my ($ll_path, $script_file, $env) = $self->get_script_env($script);
     $self->set_env($env);
-    system("$ll_path $script_file ". shell_quote(@args));
+    my $cmd = defined $self->{'opts'}->{'direct'} ? '' : $ll_path;
+    $cmd .= " $script_file ". shell_quote(@args);
+    system($cmd);
 }
 
 sub set_env {
     my ($self, $env) = @_;
     my $LLENV_ROOT = $ENV{LLENV_ROOT};
+    my $LLENV_OSTYPE = $ENV{LLENV_OSTYPE};
     for (keys %$env) {
         $ENV{$_} = '' unless defined $ENV{$_};
         my $str = eval "qq{$env->{$_}}";
@@ -221,9 +227,17 @@ sub get_script_path {
 sub get_local_path {
     my ($self, $conf) = @_;
     my $path = '';
-    for (qw/bundle_path app_path/) {
-        next unless(defined $conf->{$_});
-        $path = "$conf->{$_}:$path";
+    my $ll_path = $conf->{'ll_path'} =~ /\/bin\/[^\/]+$/
+        ? $conf->{'ll_path'} : `which $conf->{'ll_path'}`;
+    chomp $ll_path;
+    $ll_path =~ s/^(.*\/bin)\/[^\/]+$/$1/;
+    my @search_path = (
+        $conf->{'app_path'}, $conf->{'bundle_path'},
+        $ll_path
+    );
+    for (@search_path) {
+        next unless(defined $_);
+        $path = "$_:$path";
     }
     return $path;
 }
