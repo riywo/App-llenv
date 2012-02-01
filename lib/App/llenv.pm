@@ -168,7 +168,7 @@ sub command_exec {
     $self->set_env($env);
     my $cmd = defined $self->{'opts'}->{'direct'} ? '' : $ll_path;
     $cmd .= " $script_file ". shell_quote(@args);
-    system($cmd);
+    exec($cmd);
 }
 
 sub set_env {
